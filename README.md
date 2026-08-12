@@ -10,19 +10,33 @@ at any time, and nobody else can - not the gateway, not Loopring, not an index.
 Running the node is what turns "the creator still has the file" into "the file is
 reachable again."
 
-## Layout
+## Two repos
+
+This one is **private** and holds only the machinery. The content it serves is a
+separate **public** repo, `ipfs-content`, checked out alongside it:
 
 ```
-content/      files to serve. gitignored - media does not belong in git.
-repo/         kubo blockstore. gitignored. HOLDS THE NODE PRIVATE KEY.
-kubo/         the binary, v0.43.0. gitignored - fetch it, do not carry it.
-ingest.sh     add + pin + record
-manifest.tsv  cid, name, bytes, added   <- THIS is the committed artifact
+~/github/lonewolf-loopring/
+  ipfs-node/          private - this repo
+    content -> ../ipfs-content     symlink, gitignored
+    repo/             kubo blockstore. HOLDS THE NODE PRIVATE KEY.
+    kubo/             the binary, v0.43.0 - fetch it, do not carry it
+    ingest.sh
+  ipfs-content/       PUBLIC - its own repo
+    <the files>
+    manifest.tsv      cid, name, bytes, added
 ```
 
-The manifest is the point of version control here. The bytes are not tracked, but
-the claim about the bytes is: what was staged, what it hashed to, when. A CID that
-changes between commits is then visible in a diff instead of being silent.
+They are siblings rather than nested, and neither records the other's URL. Either
+can be cloned on its own, and the private repo cannot leak the public one's
+existence or vice versa.
+
+**The manifest lives with the content, not here.** That is the load-bearing choice:
+a stranger clones `ipfs-content`, runs `ipfs add --only-hash --cid-version=0` over
+the files, and confirms every CID without this node, without a gateway, and without
+trusting whoever staged it. Keeping the manifest in the private repo would leave
+the content verifiable only on the owner's word - which is the exact dependency
+this whole project exists to remove.
 
 ## Use
 

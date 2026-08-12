@@ -8,12 +8,12 @@ kubo/
 # is the peer identity. That must never reach a remote.
 repo/
 
-# The content itself. This is the whole reason the ignore file exists: media does
-# not belong in git. The manifest is what gets committed - filename, CID, size,
-# date - so the RECORD of what was staged is versioned even though the bytes are
-# not.
-content/*
-!content/.gitkeep
+# content/ is a SYMLINK to ../ipfs-content, which is its own public repo. It is
+# ignored here so the private repo never absorbs the public one - they are
+# siblings, either can be cloned alone, and neither records the other's URL.
+#
+# The manifest lives over there too, with the files it describes.
+content
 
 # Logs
 *.log

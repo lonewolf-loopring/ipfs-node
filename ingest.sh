@@ -36,10 +36,21 @@ cd "$(dirname "$0")" || exit 1
 export IPFS_PATH="$(pwd)/repo"
 K="$(pwd)/kubo/ipfs"
 CONTENT="$(pwd)/content"
-MANIFEST="$(pwd)/manifest.tsv"
+
+# The manifest lives WITH the content, in the public ipfs-content repo, not here.
+# That is deliberate: it lets anyone who clones the content verify every CID
+# themselves with `ipfs add --only-hash`, without this node and without trusting
+# whoever staged it. Keeping it in the private repo would make the content
+# unverifiable except on the owner's word.
+MANIFEST="$CONTENT/manifest.tsv"
+
+# Files that belong to the content REPO rather than being content. Ingesting
+# these would publish CIDs for a README and a git config as though they were
+# NFT payloads.
+SKIP=(manifest.tsv README.md .gitignore .gitkeep)
 
 [ -x "$K" ] || { echo "kubo not found at $K"; exit 1; }
-mkdir -p "$CONTENT"
+[ -d "$CONTENT" ] || { echo "content/ missing - expected symlink to ../ipfs-content"; exit 1; }
 
 add_opts=(--cid-version=0 --pin=true -Q)
 
@@ -85,6 +96,10 @@ files=("$CONTENT"/*)
 for f in "${files[@]}"; do
   [ -f "$f" ] || continue
   name=$(basename "$f")
+
+  skip=0
+  for s in "${SKIP[@]}"; do [ "$name" = "$s" ] && skip=1; done
+  [ "$skip" -eq 1 ] && continue
   cid=$("$K" add "${add_opts[@]}" "$f" 2>/dev/null)
   [ -n "$cid" ] || { printf "  FAILED    %s\n" "$name"; continue; }
   bytes=$(stat -c%s "$f")
