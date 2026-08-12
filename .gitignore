@@ -1,0 +1,19 @@
+# The kubo binary - 116M, and it is a released artifact with its own checksums.
+# Fetch it rather than carry it. See README for the exact version.
+kubo/
+
+# The blockstore. Rebuildable from content/ by running ./ingest.sh, so committing
+# it would store the same bytes twice in a form that cannot be reviewed.
+# It also holds the node's PRIVATE KEY (repo/config -> Identity.PrivKey), which
+# is the peer identity. That must never reach a remote.
+repo/
+
+# The content itself. This is the whole reason the ignore file exists: media does
+# not belong in git. The manifest is what gets committed - filename, CID, size,
+# date - so the RECORD of what was staged is versioned even though the bytes are
+# not.
+content/*
+!content/.gitkeep
+
+# Logs
+*.log
